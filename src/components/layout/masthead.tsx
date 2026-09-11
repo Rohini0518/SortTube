@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { AuthButton } from "@/components/layout/auth-button";
 import type { Category } from "@/lib/types";
 
 const NAV_LINKS = [
@@ -20,7 +21,7 @@ export function Masthead({ categories }: { categories: Category[] }) {
             the daily sub <span className="not-italic">👀</span>
           </span>
           <span className="block font-heading text-3xl font-extrabold tracking-tight text-foreground">
-            Sub Desk
+          Sort Tube
           </span>
         </Link>
 
@@ -36,10 +37,11 @@ export function Masthead({ categories }: { categories: Category[] }) {
           ))}
         </nav>
 
-        <div className="hidden sm:block">
+        <div className="hidden items-center gap-3 sm:flex">
           <Link href="/channels">
             <Button variant="secondary">Manage subscriptions</Button>
           </Link>
+          <AuthButton />
         </div>
 
         <MobileNav categories={categories} navLinks={NAV_LINKS} />

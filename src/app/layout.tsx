@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { VideoModalProvider } from "@/components/video/video-modal-provider";
+import { AuthSessionProvider } from "@/components/providers/session-provider";
 
 export const metadata: Metadata = {
   title: "Sub Desk — Your subscriptions, filed by desk",
@@ -12,7 +13,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <VideoModalProvider>{children}</VideoModalProvider>
+        <AuthSessionProvider>
+          <VideoModalProvider>{children}</VideoModalProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

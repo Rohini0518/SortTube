@@ -1,0 +1,130 @@
+// SortTube database schema.
+// - User/Account/Session/VerificationToken: required by @next-auth/prisma-adapter
+//   to store Google OAuth accounts + login sessions (see plan.md §4-5).
+// - Subscription/Video/ChannelSnapshot: the app's real data, synced from the
+//   YouTube Data API by the sync pipeline (see plan.md §6, .claude/skill.md).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- Auth.js adapter models (do not rename fields — the adapter expects these exact names) ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts      Account[]
+  sessions      Session[]
+
+  // App-level: when this user's data was last synced from YouTube.
+  // Null means "never synced yet".
+  lastSyncedAt  DateTime?
+
+  subscriptions Subscription[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- App data models ---
+
+model Subscription {
+  id                String    @id @default(cuid())
+  userId            String
+  channelId         String
+  channelTitle      String
+  thumbnailUrl      String?
+  uploadsPlaylistId String
+  // Null = channel hides its subscriber count (statistics.hiddenSubscriberCount).
+  // Never guess/fabricate a number when this is null — see .claude/CLAUDE.md.
+  subscriberCount   Int?
+  category          String
+  subcategory       String?
+  lastSyncedAt      DateTime  @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videos Video[]
+
+  @@unique([userId, channelId])
+  @@index([userId, category])
+}
+
+model Video {
+  id              String    @id @default(cuid())
+  youtubeVideoId  String    @unique
+  channelId       String
+  subscriptionId  String
+  title           String
+  publishedAt     DateTime
+  thumbnailUrl    String?
+  durationLabel   String?
+  viewsLabel      String?
+
+  category        String
+  subcategory     String?
+  // Set once by keyword categorization; never recomputed once set (plan.md §8).
+  classifiedAt    DateTime?
+
+  // 4-line AI summary from title+description (plan.md §9.1).
+  // Set once, cached forever; never regenerated once set.
+  summary         String?   @db.Text
+  summarizedAt    DateTime?
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, publishedAt])
+}
+
+// Append-only: one new row per channel on every sync run. Never upsert/dedupe
+// these — this history is what makes subscriber-milestone detection possible
+// later without a schema change (plan.md §5, §11).
+model ChannelSnapshot {
+  id              String   @id @default(cuid())
+  channelId       String
+  subscriberCount Int?
+  capturedAt      DateTime @default(now())
+
+  @@index([channelId, capturedAt])
+}
