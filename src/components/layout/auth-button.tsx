@@ -40,10 +40,10 @@ export function AuthButton() {
   return (
     <div className="flex items-center gap-3">
       <span className="hidden font-body text-xs text-muted-foreground lg:block">
-        Viewing the demo —
+      Viewing the demo
       </span>
       <Link href="/signin">
-        <Button variant="secondary">Sign in</Button>
+        <Button variant="secondary">Sign in/Up</Button>
       </Link>
     </div>
   );

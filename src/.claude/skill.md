@@ -26,12 +26,17 @@ Always in this order, never substituting `search.list` for any step:
      needed for step 3
 3. **`playlistItems.list`** on each channel's uploads playlist — **1 unit
    per channel** — recent videos.
-4. **Never call `search.list`.** 100 units/call for no benefit over the
+4. **`videos.list`** — batch up to 50 video IDs per call, **1 unit per
+   call**. Use `part=contentDetails,statistics` to get each video's real
+   `duration` and `viewCount` — needed for the UI's duration badge and the
+   trending ticker's ranking. Confirmed addition to the original 3-step
+   pipeline (see `plan.md` §6) — don't treat this as optional to skip.
+5. **Never call `search.list`.** 100 units/call for no benefit over the
    playlist approach above. If you find yourself reaching for it because
    "it's easier to filter this way," stop — restructure the query against
    data you already have instead.
 
-Rough budget: ~300–350 units per full refresh of a 300-subscription account,
+Rough budget: ~350–420 units per full refresh of a 300-subscription account,
 against a 10,000/day project-wide budget. This is cheap; don't add caching
 layers or call-batching cleverness beyond what's described here to "save
 quota" unless a real measurement shows a problem.

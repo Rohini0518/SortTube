@@ -146,10 +146,18 @@ project (not per user).
    **1 unit per call.**
 3. `playlistItems.list` on each channel's uploads playlist → recent videos.
    **1 unit per channel.**
-4. **Never call `search.list`** — 100 units per call, the single biggest
+4. `videos.list`, batched up to 50 video IDs per call → each video's real
+   duration (`contentDetails.duration`) and view count
+   (`statistics.viewCount`), needed for the duration badge and the trending
+   ticker's ranking. **1 unit per call**, same cost class as `channels.list`.
+   Added after the original 3-step plan once the UI cutover (§Phase 3 in
+   `build-order.md`) showed duration/views were required — confirmed
+   decision, not scope creep.
+5. **Never call `search.list`** — 100 units per call, the single biggest
    quota trap, for no benefit over the playlist approach above.
 
-Rough cost: ~300–350 units for a full refresh of a 300-subscription account.
+Rough cost: ~350–420 units for a full refresh of a 300-subscription account
+(the added `videos.list` step contributes a small fraction of this).
 Trivial against the daily budget even with real traffic hitting the refresh
 path (see §7) many times a day.
 
