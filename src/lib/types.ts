@@ -39,6 +39,8 @@ export interface Video {
   category: CategorySlug;
   subcategory?: string;
   publishedAt: string; // ISO date
+  /** Relative label computed at read time, e.g. "30m ago" / "2h ago" / "3d ago". */
+  publishedAgo: string;
   durationLabel: string;
   viewsLabel: string;
   /** Deterministic tone used to vary the halftone placeholder per-video (when no real thumbnail exists). */

@@ -66,7 +66,9 @@ export function VideoCardLead({
       <PlayableTitle video={video} className="font-heading text-xl font-extrabold leading-tight text-foreground hover:text-accent" />
       <div className="mt-3 flex items-center justify-between gap-4">
         <Byline creator={creator} />
-        <span className="shrink-0 font-body text-xs font-medium text-muted-foreground">{video.viewsLabel} views</span>
+        <span className="shrink-0 font-body text-xs font-medium text-muted-foreground">
+          {video.viewsLabel} views · {video.publishedAgo}
+        </span>
       </div>
     </Card>
   );
@@ -95,7 +97,9 @@ export function VideoBrief({
         />
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <Byline creator={creator} className="shrink-0" />
-          <span className="font-body text-xs font-medium text-muted-foreground">{video.viewsLabel} views</span>
+          <span className="font-body text-xs font-medium text-muted-foreground">
+            {video.viewsLabel} views · {video.publishedAgo}
+          </span>
           {video.youtubeId && (
             <button
               type="button"

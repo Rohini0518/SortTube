@@ -111,6 +111,7 @@ function mapVideoToUiVideo(video: DbVideo): Video {
     category: video.category as CategorySlug,
     subcategory: video.subcategory ?? undefined,
     publishedAt: video.publishedAt.toISOString().slice(0, 10),
+    publishedAgo: formatTimeAgo(video.publishedAt),
     durationLabel: video.durationLabel ?? "—",
     viewsLabel: video.viewsLabel ?? "—",
     placeholderTone: "mid",
@@ -138,8 +139,10 @@ function parseViews(label: string | null): number {
 }
 
 function formatTimeAgo(date: Date): string {
-  const hours = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60));
-  if (hours < 1) return "just now";
+  const minutes = Math.floor((Date.now() - date.getTime()) / (1000 * 60));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 }

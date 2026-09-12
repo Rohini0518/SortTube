@@ -13,10 +13,7 @@ Update this file as phases complete or the sequence changes.
 - ✅ Google Cloud project, YouTube Data API v3, OAuth consent screen
   (Testing mode), OAuth client ID.
 - ✅ Postgres provisioned (Supabase).
-- ⚠️ **Gemini API key — not yet confirmed valid.** Flagged early that the
-  value didn't match AI Studio's usual key format; never explicitly
-  verified. This blocks every AI item in Phase 4 below — check it before
-  starting that phase.
+- ✅ Gemini API key — confirmed working (see Phase 4).
 
 ## Phase 1 — Backend foundation ✅ Done
 
