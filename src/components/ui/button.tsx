@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-heading text-sm font-bold transition-all duration-200 ease-out min-h-[48px] px-6 disabled:opacity-40 disabled:pointer-events-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full font-heading text-sm font-bold transition-all duration-200 ease-out min-h-[48px] px-6 cursor-pointer disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed",
   {
     variants: {
       variant: {

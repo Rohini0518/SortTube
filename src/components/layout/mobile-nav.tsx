@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthButton } from "@/components/layout/auth-button";
 import type { Category } from "@/lib/types";
 
 export function MobileNav({
@@ -59,6 +60,9 @@ export function MobileNav({
               Manage subscriptions
             </Button>
           </Link>
+          <div className="mt-3 flex justify-center">
+            <AuthButton />
+          </div>
         </div>
       )}
     </div>

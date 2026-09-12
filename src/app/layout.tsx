@@ -4,7 +4,7 @@ import { VideoModalProvider } from "@/components/video/video-modal-provider";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 
 export const metadata: Metadata = {
-  title: "Sub Desk — Your subscriptions, filed by desk",
+  title: "SortTube — Your subscriptions, filed by desk",
   description:
     "A curated front page built from your own YouTube subscriptions, sorted into desks like a newspaper instead of shuffled by algorithm.",
 };

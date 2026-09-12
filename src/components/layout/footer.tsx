@@ -8,7 +8,7 @@ export function Footer({ categories }: { categories: Category[] }) {
     <footer className="border-t-2 border-foreground bg-muted/60">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-14 sm:px-6 lg:grid-cols-12">
         <div className="lg:col-span-4">
-          <p className="font-heading text-2xl font-extrabold text-foreground">Sub Desk</p>
+          <p className="font-heading text-2xl font-extrabold text-foreground">SortTube</p>
           <p className="mt-3 max-w-xs font-body text-sm leading-relaxed text-muted-foreground">
             Your YouTube subscriptions, filed by desk instead of shuffled by algorithm.
           </p>

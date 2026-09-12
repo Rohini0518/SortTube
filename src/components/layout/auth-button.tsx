@@ -19,6 +19,14 @@ export function AuthButton() {
   if (session?.user) {
     return (
       <div className="flex items-center gap-3">
+        {session.user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={session.user.image}
+            alt=""
+            className="h-9 w-9 rounded-full border-2 border-foreground object-cover"
+          />
+        ) : null}
         <span className="font-heading text-sm font-bold text-foreground">
           {session.user.name ?? session.user.email}
         </span>
@@ -30,8 +38,13 @@ export function AuthButton() {
   }
 
   return (
-    <Link href="/signin">
-      <Button variant="secondary">Sign in</Button>
-    </Link>
+    <div className="flex items-center gap-3">
+      <span className="hidden font-body text-xs text-muted-foreground lg:block">
+        Viewing the demo —
+      </span>
+      <Link href="/signin">
+        <Button variant="secondary">Sign in</Button>
+      </Link>
+    </div>
   );
 }

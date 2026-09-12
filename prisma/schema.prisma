@@ -41,6 +41,10 @@ model Account {
   refresh_token     String? @db.Text
   access_token      String? @db.Text
   expires_at        Int?
+  // Newer field Google's token response can include; the adapter passes the
+  // whole token response through verbatim, so this must exist or account
+  // linking fails with "Unknown argument refresh_token_expires_in".
+  refresh_token_expires_in Int?
   token_type        String?
   scope             String?
   id_token          String? @db.Text

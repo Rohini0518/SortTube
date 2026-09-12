@@ -1,10 +1,20 @@
-# Sub Desk — Build Plan
+# SortTube — Build Plan
 
-Goal: turn the current mock-data Next.js demo into a real, working product for
-a resume/portfolio showcase — a "smart YouTube homescreen" that pulls videos
-only from a user's subscriptions and auto-buckets them into desks (News, Tech,
-Sports, Education, Entertainment, Fashion, Vlogs, Trend, Fitness), while
-staying fully demoable by anyone with zero login required.
+Goal: turn the current mock-data Next.js demo into a real, working product —
+a "smart YouTube homescreen" that pulls videos only from a user's
+subscriptions and auto-buckets them into desks (News, Tech, Sports,
+Education, Entertainment, Fashion, Vlogs, Trend, Fitness). It's a portfolio
+piece, but that's not the ceiling — it's meant to genuinely work for real
+users, not just look good to reviewers. Two things are both true and both
+required:
+
+- **Zero-login demoable**: anyone landing on the site with no account sees a
+  fully populated experience via the demo account (see §3) — no sign-in wall
+  blocking a first look.
+- **Real public sign-in**: any real person should be able to sign in with
+  their own Google account and get their own subscriptions sorted — not just
+  a fixed list of manually-whitelisted testers. This means Google's OAuth
+  verification (§4) is a committed target, not a deferred nice-to-have.
 
 This file is the single source of truth for the plan. Update it as decisions
 change — don't let it drift out of sync with reality.
@@ -82,12 +92,25 @@ behind it.
   authorization, so a `refresh_token` is issued (not just a short-lived
   access token) — without this, YouTube access silently expires after ~1
   hour and the user would need to re-consent constantly.
-- **Publishing status:** stays in Google's "Testing" mode. Up to 100 test
-  user emails can sign in without any review. Add your own email and a
-  couple of trusted reviewers/interviewers here. Full Google app
-  verification (needed for unrestricted public sign-in) is explicitly
-  **out of scope for now** — revisit only if this needs to scale past a
-  portfolio piece.
+- **Publishing status:** starts in Google's "Testing" mode for development
+  (up to 100 whitelisted test-user emails — use this for your own account and
+  reviewers while building). **Moving to "In production" is a committed
+  goal**, not deferred — real users need to be able to sign in with their own
+  Google accounts without being pre-approved one-by-one. Getting there
+  requires:
+  - A real, published privacy policy page (required by Google for any
+    verified app).
+  - A homepage clearly describing what the app does and what data it
+    accesses.
+  - Since `youtube.readonly` is a non-basic scope, likely a short screen
+    recording showing how the app uses it (Google may require this during
+    review).
+  - Submitting through Google Cloud Console → Google Auth Platform for
+    review. Turnaround is Google's timeline, not ours — typically days to a
+    few weeks, so start this well before it's the last blocker to launch.
+  - Until verification completes, the app still works correctly for the demo
+    account and any whitelisted testers — verification blocks *arbitrary*
+    public sign-in only, not the rest of the product.
 - **No demo logout button.** The demo isn't a real session — there's nothing
   to log out of. There is only ever a "Sign in" affordance.
 - **On real logout:** fall back to showing the demo automatically. Near the
@@ -263,9 +286,10 @@ Revisit these later — not needed to ship a working, honest demo:
   categorization, an agent that classifies, checks its own confidence, and
   does a follow-up lookup before committing on low-confidence cases.
   Interesting technically, marginal user-facing value on top of §9.
-- **Full Google OAuth app verification.** Only needed if real third-party
-  sign-in must work for arbitrary members of the public, not just
-  whitelisted test users.
+
+Note: Full Google OAuth app verification was previously listed here as
+deferred. It no longer is — see §4. Real public sign-in is a committed goal,
+not a someday item.
 
 ## 12. Build checklist
 
@@ -300,6 +324,14 @@ Revisit these later — not needed to ship a working, honest demo:
       whitelist your own email + a couple of reviewers as OAuth test users.
 - [ ] Smoke-test both paths end to end: signed-out (demo) and signed-in
       (a real whitelisted test account).
+- [ ] Publish a real privacy policy page and a homepage description of what
+      the app does and what data it accesses (both required for OAuth
+      verification — see §4).
+- [ ] Record a short screen capture showing the `youtube.readonly` scope
+      being used, if Google's review requests one.
+- [ ] Submit the app for Google OAuth verification via Google Cloud Console
+      → Google Auth Platform, and move publishing status to "In production"
+      once approved — this is what unblocks real public sign-in (§4).
 
 ## 13. Reference: current mock data note
 

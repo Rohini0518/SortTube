@@ -18,6 +18,12 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Safe here specifically because Google is the only provider, and
+      // Google itself verifies the email — so "same email = same person" is
+      // a fair assumption. Without this, any leftover User row without a
+      // linked Account (e.g. from an interrupted callback during dev) blocks
+      // sign-in with OAuthAccountNotLinked instead of just relinking.
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           scope: "openid email profile https://www.googleapis.com/auth/youtube.readonly",
