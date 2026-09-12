@@ -39,7 +39,9 @@ export function FeaturedStory({ video, creator }: { video: Video; creator: Creat
             <Button
               variant="primary"
               className="mt-6 w-full sm:w-auto"
-              onClick={() => open({ youtubeId: video.youtubeId!, title: video.title })}
+              onClick={() =>
+                open({ youtubeId: video.youtubeId!, title: video.title, videoId: video.id, summary: video.dek })
+              }
             >
               <Play className="h-4 w-4 fill-current" strokeWidth={0} />
               Watch here

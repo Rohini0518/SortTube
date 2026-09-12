@@ -38,7 +38,9 @@ function PlayableTitle({
   return (
     <button
       type="button"
-      onClick={() => open({ youtubeId: video.youtubeId!, title: video.title })}
+      onClick={() =>
+        open({ youtubeId: video.youtubeId!, title: video.title, videoId: video.id, summary: video.dek })
+      }
       className={`${className} text-left`}
     >
       {video.title}
@@ -97,7 +99,9 @@ export function VideoBrief({
           {video.youtubeId && (
             <button
               type="button"
-              onClick={() => open({ youtubeId: video.youtubeId!, title: video.title })}
+              onClick={() =>
+                open({ youtubeId: video.youtubeId!, title: video.title, videoId: video.id, summary: video.dek })
+              }
               className="ml-auto flex items-center gap-1 rounded-full border-2 border-foreground bg-card px-2.5 py-1 font-heading text-[11px] font-bold text-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-tertiary"
             >
               <Play className="h-3 w-3 fill-current" strokeWidth={0} />

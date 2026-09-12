@@ -5,8 +5,6 @@ import { Pill } from "@/components/ui/pill";
 import { ChannelRow } from "@/components/channels/channel-row";
 import type { Creator } from "@/lib/types";
 
-const CAPACITY = 10;
-
 export function ChannelsManager({ initial }: { initial: Creator[] }) {
   const [channels, setChannels] = useState(initial.map((c) => ({ ...c, paused: false })));
   const [value, setValue] = useState("");
@@ -14,7 +12,7 @@ export function ChannelsManager({ initial }: { initial: Creator[] }) {
   const addChannel = (e: React.FormEvent) => {
     e.preventDefault();
     const handle = value.trim().replace(/^@/, "");
-    if (!handle || channels.length >= CAPACITY) return;
+    if (!handle) return;
     const name = handle
       .split(/[-_.]/)
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -39,7 +37,7 @@ export function ChannelsManager({ initial }: { initial: Creator[] }) {
           We watch them and sort their uploads into your desks.
         </p>
         <Pill tone="violet">
-          {channels.length} / {CAPACITY} tracked
+          {channels.length} tracked
         </Pill>
       </div>
 
@@ -52,7 +50,6 @@ export function ChannelsManager({ initial }: { initial: Creator[] }) {
         />
         <button
           type="submit"
-          disabled={channels.length >= CAPACITY}
           className="shrink-0 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-heading text-sm font-bold text-white pop-shadow disabled:opacity-40"
         >
           Add channel

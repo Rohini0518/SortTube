@@ -173,6 +173,11 @@ async function syncOneChannel(
       ? { category: existing.category, subcategory: existing.subcategory ?? undefined }
       : categorizeVideo(title, channelTitle);
 
+    // Summaries are NOT generated here — they're expensive (Gemini's free
+    // tier caps at 20 requests/day) and most synced videos are never opened.
+    // Generated on-demand instead, via summarizeVideo() (src/lib/gemini/
+    // summarize-action.ts), triggered by a button in the video modal.
+
     const thumb = item.snippet?.thumbnails?.default?.url ?? null;
     const publishedAt = item.contentDetails?.videoPublishedAt
       ? new Date(item.contentDetails.videoPublishedAt)

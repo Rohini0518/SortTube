@@ -12,7 +12,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import { syncIfStale } from "@/lib/youtube/sync";
 
-export const resolveTargetUserId = cache(async (): Promise<string> => {
+/** Resolves the target account's id without triggering any sync — used by
+ * the manual refresh action, which applies its own cooldown logic instead. */
+export async function getTargetUserIdOnly(): Promise<string> {
   const session = await getServerSession(authOptions);
   const demoUserId = process.env.DEMO_USER_ID;
   const userId = session?.user?.id ?? demoUserId;
@@ -21,6 +23,11 @@ export const resolveTargetUserId = cache(async (): Promise<string> => {
     throw new Error("No signed-in user and DEMO_USER_ID is not configured");
   }
 
+  return userId;
+}
+
+export const resolveTargetUserId = cache(async (): Promise<string> => {
+  const userId = await getTargetUserIdOnly();
   await syncIfStale(userId);
   return userId;
 });

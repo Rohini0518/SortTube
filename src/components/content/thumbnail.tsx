@@ -56,7 +56,9 @@ export function Thumbnail({
     <button
       type="button"
       disabled={!canPlay}
-      onClick={() => canPlay && open({ youtubeId: video.youtubeId!, title: video.title })}
+      onClick={() =>
+        canPlay && open({ youtubeId: video.youtubeId!, title: video.title, videoId: video.id, summary: video.dek })
+      }
       aria-label={canPlay ? `Play ${video.title}` : video.title}
       className={cn(
         "group/thumb relative block w-full overflow-hidden border-2 border-foreground text-left",

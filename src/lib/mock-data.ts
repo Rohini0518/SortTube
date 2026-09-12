@@ -100,6 +100,7 @@ type DbVideo = {
   viewsLabel: string | null;
   category: string;
   subcategory: string | null;
+  summary: string | null;
 };
 
 function mapVideoToUiVideo(video: DbVideo): Video {
@@ -114,6 +115,9 @@ function mapVideoToUiVideo(video: DbVideo): Video {
     viewsLabel: video.viewsLabel ?? "—",
     placeholderTone: "mid",
     youtubeId: video.youtubeVideoId,
+    // AI-generated summary (plan.md §9.1), generalized from the old
+    // featured-only "dek" field to appear on every video.
+    dek: video.summary ?? undefined,
   };
 }
 

@@ -203,16 +203,25 @@ rest stay ideas for later (see §11).
 
 ### 9.1 AI video summaries (committed)
 
-- Every video gets a **4-line LLM-generated summary**, stored on
-  `Video.summary`, generated once at sync time and cached forever
-  (`summarizedAt` stamped so it's never regenerated) — same caching
-  discipline as categorization in §8.
-- **v1 source: title + description only.** Reliable, uses data already
-  being fetched from `channels.list`/`playlistItems.list`, no extra API
-  surface, no extra risk. This is a "smart blurb," not a true
-  content-grounded summary — worth being explicit about that distinction
-  anywhere it's shown in the UI copy (e.g. don't call it a "transcript
-  summary").
+- Every video *can* get a **4-line LLM-generated summary**, stored on
+  `Video.summary`. Once generated, cached forever (`summarizedAt` stamped
+  so it's never regenerated) — same caching discipline as categorization
+  in §8.
+- **Generated on-demand, not automatically at sync time — a deliberate
+  deviation from the original plan, confirmed during Phase 4.** Gemini's
+  free tier caps out at a low daily request budget (observed: 20
+  requests/day for the model in use), and most synced videos are never
+  opened. Summarizing all of them eagerly at sync time would burn nearly
+  the whole daily budget on videos nobody looks at. Instead, a "Summarize"
+  button appears in the video modal only for videos without a summary yet;
+  clicking it generates and caches one. See
+  `src/lib/gemini/summarize-action.ts`.
+- **v1 source: title + description only**, fetched fresh at click time via
+  a single `videos.list` call (cheap against YouTube's quota, which isn't
+  the constrained resource here — Gemini's request budget is). This is a
+  "smart blurb," not a true content-grounded summary — worth being
+  explicit about that distinction anywhere it's shown in the UI copy (e.g.
+  don't call it a "transcript summary").
 - **Stretch upgrade, not a launch requirement: transcript-based summary.**
   A real content summary needs the actual video transcript. YouTube's
   official Data API (`captions.download`) only grants transcript access

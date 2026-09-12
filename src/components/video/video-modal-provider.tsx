@@ -2,10 +2,17 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { VideoSummarySection } from "@/components/video/video-summary-section";
 
 interface WatchTarget {
   youtubeId: string;
   title: string;
+  /** The video's internal DB id — needed to call the on-demand summarize
+   * action. Undefined only if a caller genuinely has no DB row for it. */
+  videoId?: string;
+  /** Cached AI summary from title+description (plan.md §9.1) — never a
+   * claim the video was actually watched, just a "smart blurb." */
+  summary?: string;
 }
 
 interface VideoModalContextValue {
@@ -74,6 +81,11 @@ export function VideoModalProvider({ children }: { children: React.ReactNode }) 
                 className="h-full w-full"
               />
             </div>
+            <VideoSummarySection
+              key={active.videoId ?? active.youtubeId}
+              videoId={active.videoId}
+              initialSummary={active.summary}
+            />
           </div>
         </div>
       )}

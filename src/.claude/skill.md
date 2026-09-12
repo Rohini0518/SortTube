@@ -69,8 +69,12 @@ syncs:
   keyword/regex rules against title + channel name, per `plan.md` §8. Only
   runs for videos that don't already have `classifiedAt` set.
 - **AI summary** (`Video.summary`, `summarizedAt`) — per `plan.md` §9.1,
-  from title + description only in v1. Only runs for videos that don't
-  already have `summarizedAt` set.
+  from title + description only in v1. **Not generated during this sync
+  pipeline at all** — Gemini's free tier daily budget is too low to
+  summarize every synced video, most of which are never opened. Generated
+  on-demand instead (`src/lib/gemini/summarize-action.ts`), triggered by a
+  UI button. Once generated, never regenerated — same "only if unset" rule
+  as categorization, just triggered by a click instead of a sync run.
 - **`ChannelSnapshot`** rows are the one exception — these are *append-only*,
   a new row every sync run per channel, by design (this is what makes
   subscriber-milestone detection possible later without schema rework). Do
