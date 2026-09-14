@@ -16,7 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { getYoutubeClientForUser } from "@/lib/youtube/client";
 import { matchKeywordCategory } from "@/lib/youtube/categorize";
 import { formatDuration, formatCount } from "@/lib/youtube/format";
-import { categorizeChannelWithGemini, type CategoryOption } from "@/lib/gemini/categorize-channel";
+import { categorizeChannelWithAI, type CategoryOption } from "@/lib/gemini/categorize-channel";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
 
 type YoutubeClient = Awaited<ReturnType<typeof getYoutubeClientForUser>>;
@@ -157,9 +157,9 @@ async function syncOneChannel(
       categorizedAt = new Date();
     } else if (categorizationBudget.remaining > 0) {
       categorizationBudget.remaining -= 1;
-      const geminiSlug = await categorizeChannelWithGemini(channelTitle, availableCategories);
-      if (geminiSlug) {
-        category = geminiSlug;
+      const aiSlug = await categorizeChannelWithAI(channelTitle, availableCategories);
+      if (aiSlug) {
+        category = aiSlug;
         subcategory = undefined;
         categorizedAt = new Date();
       }
