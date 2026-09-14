@@ -15,7 +15,11 @@ export interface Subcategory {
 }
 
 export interface Category {
-  slug: CategorySlug;
+  // A plain string, not CategorySlug — a user's custom categories (see
+  // src/lib/categories/actions.ts) have slugs CategorySlug can't express.
+  // CategorySlug itself stays around only for categorize.ts's built-in
+  // keyword rules, which only ever produce one of the fixed 9.
+  slug: string;
   name: string;
   /** One-line editorial description of what this desk curates. */
   standfirst: string;
@@ -27,7 +31,7 @@ export interface Creator {
   name: string;
   /** Two-letter monogram used for the bordered avatar placeholder. */
   monogram: string;
-  category: CategorySlug;
+  category: string;
   subcategory?: string;
   subscriberLabel: string;
 }
@@ -36,7 +40,7 @@ export interface Video {
   id: string;
   title: string;
   creatorId: string;
-  category: CategorySlug;
+  category: string;
   subcategory?: string;
   publishedAt: string; // ISO date
   /** Relative label computed at read time, e.g. "30m ago" / "2h ago" / "3d ago". */

@@ -21,7 +21,7 @@ export default async function ChannelsPage() {
         </div>
 
         <div className="mt-8">
-          <ChannelsManager initial={tracked} />
+          <ChannelsManager initial={tracked} categories={categories} />
         </div>
       </main>
 

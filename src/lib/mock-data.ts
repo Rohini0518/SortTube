@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { resolveTargetUserId } from "@/lib/auth/target-user";
 import { formatCount } from "@/lib/youtube/format";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
-import type { Category, Creator, Video, Activity, CategorySlug } from "./types";
+import type { Category, Creator, Video, Activity } from "./types";
 
 export const CATEGORIES: Category[] = DEFAULT_CATEGORIES;
 
@@ -28,7 +28,7 @@ function mapSubscriptionToCreator(sub: DbSubscription): Creator {
     id: sub.channelId,
     name: sub.channelTitle,
     monogram: getMonogram(sub.channelTitle),
-    category: sub.category as CategorySlug,
+    category: sub.category,
     subcategory: sub.subcategory ?? undefined,
     subscriberLabel: sub.subscriberCount != null ? formatCount(sub.subscriberCount) : "—",
   };
@@ -52,7 +52,7 @@ function mapVideoToUiVideo(video: DbVideo): Video {
     id: video.id,
     title: video.title,
     creatorId: video.channelId,
-    category: video.category as CategorySlug,
+    category: video.category,
     subcategory: video.subcategory ?? undefined,
     publishedAt: video.publishedAt.toISOString().slice(0, 10),
     publishedAgo: formatTimeAgo(video.publishedAt),
@@ -93,8 +93,16 @@ function formatTimeAgo(date: Date): string {
 
 // --- The API-shaped data layer the page/component layer calls ---
 
+/** The 9 built-in desks plus the target account's own custom ones (empty
+ * for the demo account, which never has any — custom categories are
+ * signed-in-only, see lib/categories/actions.ts). */
 export async function getCategories(): Promise<Category[]> {
-  return CATEGORIES;
+  const userId = await resolveTargetUserId();
+  const customCategories = await prisma.category.findMany({ where: { userId } });
+  return [
+    ...CATEGORIES,
+    ...customCategories.map((c) => ({ slug: c.slug, name: c.name, standfirst: c.standfirst })),
+  ];
 }
 
 export async function getFeaturedVideo(): Promise<{ video: Video; creator: Creator }> {
@@ -135,7 +143,8 @@ export async function getFrontPageFeed(limitPerCategory = 3): Promise<FeedSectio
   // elsewhere on the page — exclude it here so it isn't shown twice.
   const featuredId = videos[0]?.id;
 
-  return CATEGORIES.map((category) => {
+  const categories = await getCategories();
+  return categories.map((category) => {
     const items = videos
       .filter((v) => v.category === category.slug && v.id !== featuredId)
       .slice(0, limitPerCategory)
@@ -201,7 +210,8 @@ export interface CreatorBlock {
 export async function getCategoryDesk(
   categorySlug: string,
 ): Promise<{ category: Category; creatorBlocks: CreatorBlock[] } | null> {
-  const category = CATEGORIES.find((c) => c.slug === categorySlug);
+  const categories = await getCategories();
+  const category = categories.find((c) => c.slug === categorySlug);
   if (!category) return null;
 
   const userId = await resolveTargetUserId();

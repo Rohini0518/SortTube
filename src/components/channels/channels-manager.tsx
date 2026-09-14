@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Pill } from "@/components/ui/pill";
 import { ChannelRow } from "@/components/channels/channel-row";
-import type { Creator } from "@/lib/types";
+import { NewCategoryForm } from "@/components/channels/new-category-form";
+import type { Category, Creator } from "@/lib/types";
 
-export function ChannelsManager({ initial }: { initial: Creator[] }) {
+export function ChannelsManager({ initial, categories }: { initial: Creator[]; categories: Category[] }) {
   const [channels, setChannels] = useState(initial.map((c) => ({ ...c, paused: false })));
+  const [categoryList, setCategoryList] = useState(categories);
   const [value, setValue] = useState("");
+  const { data: session } = useSession();
+  const isSignedIn = Boolean(session?.user);
 
   const addChannel = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,16 +61,28 @@ export function ChannelsManager({ initial }: { initial: Creator[] }) {
         </button>
       </form>
 
+      {isSignedIn && (
+        <div className="mt-4">
+          <NewCategoryForm onCreated={(category) => setCategoryList((prev) => [...prev, category])} />
+        </div>
+      )}
+
       <div className="mt-6 space-y-4">
         {channels.map((creator) => (
           <ChannelRow
             key={creator.id}
             creator={creator}
+            categories={categoryList}
             paused={creator.paused}
             onTogglePause={() =>
               setChannels((prev) => prev.map((c) => (c.id === creator.id ? { ...c, paused: !c.paused } : c)))
             }
             onRemove={() => setChannels((prev) => prev.filter((c) => c.id !== creator.id))}
+            onRecategorized={(newCategory) =>
+              setChannels((prev) =>
+                prev.map((c) => (c.id === creator.id ? { ...c, category: newCategory } : c)),
+              )
+            }
           />
         ))}
         {channels.length === 0 && (

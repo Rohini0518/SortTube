@@ -11,10 +11,11 @@ import {
   Camera,
   TrendingUp,
   Dumbbell,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVideoModal } from "@/components/video/video-modal-provider";
-import type { CategorySlug, Video } from "@/lib/types";
+import type { Video } from "@/lib/types";
 
 const TONE_STYLES: Record<Video["placeholderTone"], string> = {
   light: "bg-quaternary/20",
@@ -22,7 +23,10 @@ const TONE_STYLES: Record<Video["placeholderTone"], string> = {
   dark: "bg-accent/15",
 };
 
-const CATEGORY_ICON: Record<CategorySlug, typeof Newspaper> = {
+// Not Record<CategorySlug, ...> — video.category is a plain string now (a
+// user's custom categories aren't in that fixed union), so lookups can miss
+// and fall back to a generic icon below.
+const CATEGORY_ICON: Record<string, typeof Newspaper> = {
   news: Newspaper,
   tech: Cpu,
   sports: Trophy,
@@ -48,7 +52,7 @@ export function Thumbnail({
   className?: string;
   priority?: boolean;
 }) {
-  const Icon = CATEGORY_ICON[video.category];
+  const Icon = CATEGORY_ICON[video.category] ?? Tag;
   const { open } = useVideoModal();
   const canPlay = Boolean(video.youtubeId);
 

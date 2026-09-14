@@ -31,3 +31,15 @@ export const resolveTargetUserId = cache(async (): Promise<string> => {
   await syncIfStale(userId);
   return userId;
 });
+
+/** Used by mutations (recategorize, create custom category, ...) that must
+ * NEVER apply to the shared demo account — unlike resolveTargetUserId /
+ * getTargetUserIdOnly, this has no demo-account fallback: it throws if
+ * nobody is actually signed in. */
+export async function getSignedInUserIdOrThrow(): Promise<string> {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    throw new Error("This action requires a signed-in user.");
+  }
+  return session.user.id;
+}
