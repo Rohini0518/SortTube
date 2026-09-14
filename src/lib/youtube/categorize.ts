@@ -37,17 +37,19 @@ const RULES: Rule[] = [
   { category: "news", pattern: /\b(news|breaking|headlines)\b/i },
 ];
 
-const DEFAULT_CATEGORY: CategorySlug = "trend";
-
-export function categorizeVideo(
+/** Returns null when nothing matches, instead of defaulting — lets a caller
+ * (the channel-categorization path in sync.ts) distinguish "keyword rules
+ * genuinely found nothing" from "confidently matched," so it knows when to
+ * try the Gemini fallback rather than just silently landing on `trend`. */
+export function matchKeywordCategory(
   title: string,
   channelTitle: string,
-): { category: CategorySlug; subcategory?: string } {
+): { category: CategorySlug; subcategory?: string } | null {
   const haystack = `${title} ${channelTitle}`;
   for (const rule of RULES) {
     if (rule.pattern.test(haystack)) {
       return { category: rule.category, subcategory: rule.subcategory };
     }
   }
-  return { category: DEFAULT_CATEGORY };
+  return null;
 }

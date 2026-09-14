@@ -32,9 +32,7 @@ export function FeaturedStory({ video, creator }: { video: Video; creator: Creat
 
           <div className="mt-6 flex items-center justify-between gap-4 rounded-2xl border-2 border-foreground bg-card px-4 py-3">
             <Byline creator={creator} showSubs />
-            <span className="shrink-0 font-body text-xs font-medium text-muted-foreground">
-              {video.viewsLabel} views · {video.publishedAgo}
-            </span>
+            <span className="shrink-0 font-body text-xs font-medium text-muted-foreground">{video.viewsLabel} views</span>
           </div>
 
           {video.youtubeId && (

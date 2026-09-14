@@ -8,66 +8,10 @@
 import { prisma } from "@/lib/prisma";
 import { resolveTargetUserId } from "@/lib/auth/target-user";
 import { formatCount } from "@/lib/youtube/format";
+import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
 import type { Category, Creator, Video, Activity, CategorySlug } from "./types";
 
-export const CATEGORIES: Category[] = [
-  {
-    slug: "news",
-    name: "News",
-    standfirst: "Verified, curated coverage — no algorithmic outrage bait.",
-  },
-  {
-    slug: "tech",
-    name: "Technology",
-    standfirst: "Engineering, tooling, and the AI beat, sorted by discipline.",
-    subcategories: [
-      { slug: "ai", name: "AI" },
-      { slug: "frontend", name: "Frontend" },
-      { slug: "backend", name: "Backend" },
-      { slug: "fullstack", name: "Full-stack" },
-    ],
-  },
-  {
-    slug: "sports",
-    name: "Sports",
-    standfirst: "Match analysis, transfer talk, and post-game breakdowns.",
-  },
-  {
-    slug: "education",
-    name: "Education",
-    standfirst: "Lectures and explainers worth your attention span.",
-  },
-  {
-    slug: "entertainment",
-    name: "Entertainment",
-    standfirst: "Film, television, and music — by language and region.",
-    subcategories: [
-      { slug: "hindi", name: "Hindi Cinema" },
-      { slug: "hollywood", name: "Hollywood" },
-      { slug: "korean", name: "Korean" },
-    ],
-  },
-  {
-    slug: "fashion",
-    name: "Fashion",
-    standfirst: "Style breakdowns, hauls, and season previews.",
-  },
-  {
-    slug: "vlogs",
-    name: "Vlogs",
-    standfirst: "Life, travel, and the everyday — from people worth following.",
-  },
-  {
-    slug: "trend",
-    name: "Trend Desk",
-    standfirst: "What's moving today, tracked before it's everywhere.",
-  },
-  {
-    slug: "fitness",
-    name: "Fitness",
-    standfirst: "Training, diet, and the discipline behind both.",
-  },
-];
+export const CATEGORIES: Category[] = DEFAULT_CATEGORIES;
 
 // --- Mapping helpers: DB rows -> the UI's existing Creator/Video shapes ---
 
@@ -243,4 +187,48 @@ export async function getTrackedCreators(): Promise<Creator[]> {
 
   const subs = await prisma.subscription.findMany({ where: { userId } });
   return subs.map(mapSubscriptionToCreator);
+}
+
+export interface CreatorBlock {
+  creator: Creator;
+  videos: Video[];
+}
+
+/** The full desk for one category ("See full desk" destination): every
+ * creator in this category, each with their most recent 4 videos, ordered
+ * by whichever creator posted most recently. Returns null for an unknown
+ * category slug so the page can 404. */
+export async function getCategoryDesk(
+  categorySlug: string,
+): Promise<{ category: Category; creatorBlocks: CreatorBlock[] } | null> {
+  const category = CATEGORIES.find((c) => c.slug === categorySlug);
+  if (!category) return null;
+
+  const userId = await resolveTargetUserId();
+
+  const videos = await prisma.video.findMany({
+    where: { subscription: { userId }, category: categorySlug },
+    orderBy: { publishedAt: "desc" },
+    include: { subscription: true },
+  });
+
+  const byChannel = new Map<string, typeof videos>();
+  for (const video of videos) {
+    const existing = byChannel.get(video.channelId);
+    if (existing) {
+      existing.push(video);
+    } else {
+      byChannel.set(video.channelId, [video]);
+    }
+  }
+
+  // Each channel's own list is already sorted newest-first (from the query
+  // above); channels themselves are ordered by their most recent video,
+  // since byChannel was built in that same newest-first pass.
+  const creatorBlocks: CreatorBlock[] = [...byChannel.values()].map((channelVideos) => ({
+    creator: mapSubscriptionToCreator(channelVideos[0].subscription),
+    videos: channelVideos.slice(0, 4).map(mapVideoToUiVideo),
+  }));
+
+  return { category, creatorBlocks };
 }

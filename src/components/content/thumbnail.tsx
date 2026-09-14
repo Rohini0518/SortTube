@@ -92,6 +92,9 @@ export function Thumbnail({
         </span>
       )}
 
+      <span className="absolute bottom-2 left-2 rounded-full border-2 border-foreground bg-card px-2 py-0.5 font-heading text-[11px] font-bold leading-none text-foreground">
+        {video.publishedAgo}
+      </span>
       <span className="absolute bottom-2 right-2 rounded-full border-2 border-foreground bg-card px-2 py-0.5 font-heading text-[11px] font-bold leading-none text-foreground">
         {video.durationLabel}
       </span>

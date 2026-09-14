@@ -14,14 +14,21 @@
 import type { youtube_v3 } from "googleapis";
 import { prisma } from "@/lib/prisma";
 import { getYoutubeClientForUser } from "@/lib/youtube/client";
-import { categorizeVideo } from "@/lib/youtube/categorize";
+import { matchKeywordCategory } from "@/lib/youtube/categorize";
 import { formatDuration, formatCount } from "@/lib/youtube/format";
+import { categorizeChannelWithGemini, type CategoryOption } from "@/lib/gemini/categorize-channel";
+import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
 
 type YoutubeClient = Awaited<ReturnType<typeof getYoutubeClientForUser>>;
 type YoutubeChannel = youtube_v3.Schema$Channel;
 
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const RECENT_VIDEOS_PER_CHANNEL = 10;
+const DEFAULT_CATEGORY_SLUG = "trend";
+// Gemini free tier: ~20 requests/day, shared with the on-demand summaries
+// feature. This runs automatically during sync (not on-demand), so it needs
+// its own cap — see smart-categorization.md's lesson from the summaries work.
+const MAX_NEW_CHANNEL_CATEGORIZATIONS_PER_SYNC = 4;
 
 export async function syncIfStale(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -58,6 +65,13 @@ export async function syncUserSubscriptions(userId: string): Promise<void> {
   } while (pageToken);
 
   // Step 2: channels.list, batched up to 50 ids per call.
+  const customCategories = await prisma.category.findMany({ where: { userId } });
+  const availableCategories: CategoryOption[] = [
+    ...DEFAULT_CATEGORIES.map((c) => ({ slug: c.slug, name: c.name })),
+    ...customCategories.map((c) => ({ slug: c.slug, name: c.name })),
+  ];
+  const categorizationBudget = { remaining: MAX_NEW_CHANNEL_CATEGORIZATIONS_PER_SYNC };
+
   const syncedVideoIds: string[] = [];
   for (const batch of chunk(channelIds, 50)) {
     const res = await youtube.channels.list({
@@ -67,7 +81,7 @@ export async function syncUserSubscriptions(userId: string): Promise<void> {
     });
 
     for (const channel of res.data.items ?? []) {
-      const videoIds = await syncOneChannel(youtube, userId, channel);
+      const videoIds = await syncOneChannel(youtube, userId, channel, availableCategories, categorizationBudget);
       syncedVideoIds.push(...videoIds);
     }
   }
@@ -105,6 +119,8 @@ async function syncOneChannel(
   youtube: YoutubeClient,
   userId: string,
   channel: YoutubeChannel,
+  availableCategories: CategoryOption[],
+  categorizationBudget: { remaining: number },
 ): Promise<string[]> {
   const channelId = channel.id;
   const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
@@ -121,7 +137,36 @@ async function syncOneChannel(
       ? Number(channel.statistics.subscriberCount)
       : null;
 
-  const { category, subcategory } = categorizeVideo(channelTitle, channelTitle);
+  const existingSubscription = await prisma.subscription.findUnique({
+    where: { userId_channelId: { userId, channelId } },
+    select: { category: true, subcategory: true, categorizedAt: true },
+  });
+
+  // Decide once, ever — never re-decided on later syncs (this is what makes
+  // "decide once, not every Gemini call" and manual "Move to..." choices
+  // both work off a single field, per plan.md/smart-categorization.md).
+  let category = existingSubscription?.category ?? DEFAULT_CATEGORY_SLUG;
+  let subcategory: string | undefined = existingSubscription?.subcategory ?? undefined;
+  let categorizedAt = existingSubscription?.categorizedAt ?? null;
+
+  if (!categorizedAt) {
+    const keywordMatch = matchKeywordCategory(channelTitle, channelTitle);
+    if (keywordMatch) {
+      category = keywordMatch.category;
+      subcategory = keywordMatch.subcategory;
+      categorizedAt = new Date();
+    } else if (categorizationBudget.remaining > 0) {
+      categorizationBudget.remaining -= 1;
+      const geminiSlug = await categorizeChannelWithGemini(channelTitle, availableCategories);
+      if (geminiSlug) {
+        category = geminiSlug;
+        subcategory = undefined;
+        categorizedAt = new Date();
+      }
+      // else: leave categorizedAt null — retried on the next sync, same as
+      // the summaries feature's failure handling.
+    }
+  }
 
   const subscription = await prisma.subscription.upsert({
     where: { userId_channelId: { userId, channelId } },
@@ -131,6 +176,9 @@ async function syncOneChannel(
       uploadsPlaylistId,
       subscriberCount,
       lastSyncedAt: new Date(),
+      category,
+      subcategory,
+      categorizedAt,
     },
     create: {
       userId,
@@ -141,6 +189,7 @@ async function syncOneChannel(
       subscriberCount,
       category,
       subcategory,
+      categorizedAt,
     },
   });
 
@@ -163,15 +212,11 @@ async function syncOneChannel(
     const title = item.snippet?.title;
     if (!youtubeVideoId || !title) continue;
 
-    const existing = await prisma.video.findUnique({
-      where: { youtubeVideoId },
-      select: { classifiedAt: true, category: true, subcategory: true },
-    });
-
-    // Never recompute a video's category once classified.
-    const videoCategory = existing?.classifiedAt
-      ? { category: existing.category, subcategory: existing.subcategory ?? undefined }
-      : categorizeVideo(title, channelTitle);
+    // A video always belongs to its channel's category — no per-video
+    // guessing from the title. If the channel gets recategorized (manually,
+    // or by Gemini on a later sync), every one of its videos should reflect
+    // that here too, so this is set on every sync rather than "decided once."
+    const videoCategory = { category, subcategory };
 
     // Summaries are NOT generated here — they're expensive (Gemini's free
     // tier caps at 20 requests/day) and most synced videos are never opened.
@@ -185,7 +230,12 @@ async function syncOneChannel(
 
     await prisma.video.upsert({
       where: { youtubeVideoId },
-      update: { title, thumbnailUrl: thumb },
+      update: {
+        title,
+        thumbnailUrl: thumb,
+        category: videoCategory.category,
+        subcategory: videoCategory.subcategory,
+      },
       create: {
         youtubeVideoId,
         channelId,
@@ -195,7 +245,6 @@ async function syncOneChannel(
         thumbnailUrl: thumb,
         category: videoCategory.category,
         subcategory: videoCategory.subcategory,
-        classifiedAt: existing?.classifiedAt ?? new Date(),
       },
     });
 

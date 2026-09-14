@@ -30,6 +30,7 @@ model User {
   lastSyncedAt  DateTime?
 
   subscriptions Subscription[]
+  categories    Category[]
 }
 
 model Account {
@@ -86,6 +87,13 @@ model Subscription {
   subscriberCount   Int?
   category          String
   subcategory       String?
+  // Set once — by keyword rules, or by Gemini if those miss — the first
+  // time this subscription is synced; never recomputed after that, no
+  // matter how many syncs run. A manual "Move to..." (channel-level
+  // recategorization) also writes category/subcategory directly while
+  // leaving this stamped, so the same "already decided" rule protects
+  // manual choices too, with no separate override flag needed.
+  categorizedAt     DateTime?
   lastSyncedAt      DateTime  @default(now())
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -119,6 +127,22 @@ model Video {
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([subscriptionId, publishedAt])
+}
+
+// A user's own custom desk, beyond the fixed 9 built-in categories (which
+// stay a hardcoded constant, not rows here — see src/lib/mock-data.ts).
+// Created via createCustomCategory (src/lib/categories/actions.ts).
+model Category {
+  id         String   @id @default(cuid())
+  userId     String
+  slug       String
+  name       String
+  standfirst String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
 }
 
 // Append-only: one new row per channel on every sync run. Never upsert/dedupe
