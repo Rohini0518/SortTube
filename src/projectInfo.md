@@ -54,3 +54,10 @@ Rewrite mock-data.ts's functions to query Prisma via targetUserId instead of the
 Keyword-based categorization at sync time, cached on the Video row (LLM classification is a later upgrade, not needed for launch).
 Header: Sign in / avatar+name based on session; on logout, redirect home with a nudge like "You're viewing the demo — sign in to see your personalized dashboard."
 Deploy, add production redirect URI, whitelist your own email + a couple of trusted reviewers as OAuth test users so real sign-in is demoable to at least a few people before you'd ever need full Google verification.
+
+
+NAV UI :
+
+ default set of 6 for the nav, but customizable per user (they can swap which ones show), and this whole nav feature is on hold until the topic-based categorization work is fully built. I'll keep it noted for later; no action on it now.
+
+That leaves the plan in src/topic-based-categorization.md as the next thing to actually build, starting with Step 1 (seeding built-ins into the database). Ready to start whenever you say go.
