@@ -8,10 +8,8 @@
 import { prisma } from "@/lib/prisma";
 import { resolveTargetUserId } from "@/lib/auth/target-user";
 import { formatCount } from "@/lib/youtube/format";
-import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
+import { ensureBuiltInCategories, backfillOrphanedCategories } from "@/lib/categories/seed";
 import type { Category, Creator, Video, Activity } from "./types";
-
-export const CATEGORIES: Category[] = DEFAULT_CATEGORIES;
 
 // --- Mapping helpers: DB rows -> the UI's existing Creator/Video shapes ---
 
@@ -93,19 +91,24 @@ function formatTimeAgo(date: Date): string {
 
 // --- The API-shaped data layer the page/component layer calls ---
 
-/** The 9 built-in desks plus the target account's own custom ones (empty
- * for the demo account, which never has any — custom categories are
- * signed-in-only, see lib/categories/actions.ts). */
+/** Every category the target account has — the 7 built-ins (auto-seeded if
+ * missing) plus anything created since, manually or automatically
+ * (lib/categories/actions.ts, topic-based-categorization.md). One plain
+ * query — built-in vs. custom is no longer a distinction the database or
+ * this function needs to care about. */
 export async function getCategories(): Promise<Category[]> {
   const userId = await resolveTargetUserId();
-  const customCategories = await prisma.category.findMany({ where: { userId } });
-  return [
-    ...CATEGORIES,
-    ...customCategories.map((c) => ({ slug: c.slug, name: c.name, standfirst: c.standfirst })),
-  ];
+  await ensureBuiltInCategories(userId);
+  await backfillOrphanedCategories(userId);
+  const categories = await prisma.category.findMany({ where: { userId }, orderBy: { createdAt: "asc" } });
+  return categories.map((c) => ({ slug: c.slug, name: c.name, standfirst: c.standfirst }));
 }
 
-export async function getFeaturedVideo(): Promise<{ video: Video; creator: Creator }> {
+/** Null when the target account has no synced videos yet — a brand-new
+ * signed-in user before their first sync completes, or the mock dashboard
+ * while YOUTUBE_API_KEY isn't configured yet. The homepage renders an
+ * empty state instead of the hero story in that case. */
+export async function getFeaturedVideo(): Promise<{ video: Video; creator: Creator } | null> {
   const userId = await resolveTargetUserId();
 
   const dbVideo = await prisma.video.findFirst({
@@ -114,9 +117,7 @@ export async function getFeaturedVideo(): Promise<{ video: Video; creator: Creat
     include: { subscription: true },
   });
 
-  if (!dbVideo) {
-    throw new Error(`No synced videos found for user ${userId} — has a sync run yet?`);
-  }
+  if (!dbVideo) return null;
 
   return {
     video: { ...mapVideoToUiVideo(dbVideo), isFeatured: true },

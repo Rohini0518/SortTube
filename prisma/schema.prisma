@@ -79,6 +79,11 @@ model Subscription {
   id                String    @id @default(cuid())
   userId            String
   channelId         String
+  // Only set for mock-dashboard subscriptions (lib/mock-dashboard/) — the
+  // @handle from seed-channels.ts, kept so a routine refresh can skip
+  // re-resolving it to a channel id via forHandle. Null for real accounts,
+  // which are always synced by channel id from subscriptions.list directly.
+  channelHandle     String?
   channelTitle      String
   thumbnailUrl      String?
   uploadsPlaylistId String

@@ -1,13 +1,21 @@
+// Every value categorize.ts's keyword rules can produce. Not the same thing
+// as "built-in" anymore — only news/tech/ai/education/entertainment/
+// fitness/podcasts are guaranteed to exist for every user (see
+// default-categories.ts); sports/fashion/vlogs/trend are still valid
+// keyword-rule outputs, they just get auto-created on demand the first time
+// a real channel actually needs one (topic-based-categorization.md).
 export type CategorySlug =
   | "news"
   | "tech"
+  | "ai"
   | "sports"
   | "education"
   | "entertainment"
   | "fashion"
   | "vlogs"
   | "trend"
-  | "fitness";
+  | "fitness"
+  | "podcasts";
 
 export interface Subcategory {
   slug: string;
@@ -18,12 +26,11 @@ export interface Category {
   // A plain string, not CategorySlug — a user's custom categories (see
   // src/lib/categories/actions.ts) have slugs CategorySlug can't express.
   // CategorySlug itself stays around only for categorize.ts's built-in
-  // keyword rules, which only ever produce one of the fixed 9.
+  // keyword rules.
   slug: string;
   name: string;
   /** One-line editorial description of what this desk curates. */
   standfirst: string;
-  subcategories?: Subcategory[];
 }
 
 export interface Creator {

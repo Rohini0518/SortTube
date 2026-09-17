@@ -40,3 +40,15 @@ export async function getYoutubeClientForUser(userId: string) {
 
   return google.youtube({ version: "v3", auth: oauth2Client });
 }
+
+/** For public-data-only calls with no signed-in user behind them — the
+ * mock dashboard (mock-dashboard/sync.ts). Uses a plain API key instead of
+ * OAuth: fine for anything publicly visible on youtube.com (channel/video
+ * metadata), since it doesn't act as or need permission from any person. */
+export function getYoutubePublicClient() {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey) {
+    throw new Error("YOUTUBE_API_KEY is not configured");
+  }
+  return google.youtube({ version: "v3", auth: apiKey });
+}

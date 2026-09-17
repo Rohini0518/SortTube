@@ -1,17 +1,31 @@
-// Signed-in-only "+ New category" form (Channels page). On a name collision
-// (with a built-in or one of the user's own categories), the server action
-// returns the matching existing category instead of a flat error, and this
-// shows a "use the existing one?" confirm instead of just failing.
+// "+ New category" form (Channels page) — works for everyone. Signed-in
+// users get a real, persisted category (createCustomCategory). Signed-out
+// visitors (viewing the shared mock dashboard) get a local-only category
+// instead — nothing to save against, so it just updates on-screen state,
+// same as Pause/Remove/Move-to already do for them. On a name collision
+// (with a built-in or existing category) the existing one is offered
+// instead of a flat error, in both modes.
 
 "use client";
 
 import { useState, useTransition } from "react";
+import { useSession } from "next-auth/react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createCustomCategory } from "@/lib/categories/actions";
+import { slugify } from "@/lib/categories/slugify";
 import type { Category } from "@/lib/types";
 
-export function NewCategoryForm({ onCreated }: { onCreated: (category: Category) => void }) {
+export function NewCategoryForm({
+  categories,
+  onCreated,
+}: {
+  categories: Category[];
+  onCreated: (category: Category) => void;
+}) {
+  const { data: session } = useSession();
+  const isSignedIn = Boolean(session?.user);
+
   const [name, setName] = useState("");
   const [standfirst, setStandfirst] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -27,11 +41,26 @@ export function NewCategoryForm({ onCreated }: { onCreated: (category: Category)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !standfirst.trim()) return;
+    const trimmedName = name.trim();
+    const trimmedStandfirst = standfirst.trim();
+    if (!trimmedName || !trimmedStandfirst) return;
     setError(null);
     setCollision(null);
+
+    if (!isSignedIn) {
+      const slug = slugify(trimmedName);
+      const existing = categories.find((c) => c.slug === slug);
+      if (existing) {
+        setCollision(existing);
+        return;
+      }
+      onCreated({ slug, name: trimmedName, standfirst: trimmedStandfirst });
+      reset();
+      return;
+    }
+
     startTransition(async () => {
-      const result = await createCustomCategory(name, standfirst);
+      const result = await createCustomCategory(trimmedName, trimmedStandfirst);
       if (result.ok) {
         onCreated(result.category);
         reset();

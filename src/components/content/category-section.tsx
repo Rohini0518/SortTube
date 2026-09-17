@@ -1,16 +1,25 @@
 import { SectionHeader } from "@/components/editorial/section-header";
 import { VideoCardLead, VideoBrief } from "@/components/content/video-card";
+import { SUBCATEGORY_LABELS } from "@/lib/categories/subcategory-labels";
 import type { FeedSection } from "@/lib/mock-data";
 
 const TONES = ["accent", "secondary", "tertiary", "quaternary"] as const;
 
 export function CategorySection({ section, index }: { section: FeedSection; index: number }) {
-  const [lead, ...rest] = section.items;
+  const [lead, ...rest] = section.items;// here rest
+  const leadData=(lead.creator.name,lead.creator.category)
+  // console.log("rest--",rest,"lead--",lead)
+  const data1 = rest.map((item) => ({
+  creator: item.creator.name,
+  category: item.creator.category,
+}));
+// console.log("leadData",lead.creator.name,lead.creator.category)
+// console.log("data1 rest--", data1);
   if (!lead) return null;
   const tone = TONES[index % TONES.length];
 
   const subLabel = (subcategory?: string) =>
-    subcategory ? section.category.subcategories?.find((s) => s.slug === subcategory)?.name : undefined;
+    subcategory ? SUBCATEGORY_LABELS[section.category.slug]?.find((s) => s.slug === subcategory)?.name : undefined;
 
   return (
     <section id={section.category.slug} className="scroll-mt-28 py-10">
@@ -21,6 +30,7 @@ export function CategorySection({ section, index }: { section: FeedSection; inde
         categorySlug={section.category.slug}
         tone={tone}
       />
+      <h1>ROHIN</h1>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <VideoCardLead

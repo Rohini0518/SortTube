@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { Pill } from "@/components/ui/pill";
 import { ChannelRow } from "@/components/channels/channel-row";
 import { NewCategoryForm } from "@/components/channels/new-category-form";
@@ -11,8 +10,6 @@ export function ChannelsManager({ initial, categories }: { initial: Creator[]; c
   const [channels, setChannels] = useState(initial.map((c) => ({ ...c, paused: false })));
   const [categoryList, setCategoryList] = useState(categories);
   const [value, setValue] = useState("");
-  const { data: session } = useSession();
-  const isSignedIn = Boolean(session?.user);
 
   const addChannel = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +58,12 @@ export function ChannelsManager({ initial, categories }: { initial: Creator[]; c
         </button>
       </form>
 
-      {isSignedIn && (
-        <div className="mt-4">
-          <NewCategoryForm onCreated={(category) => setCategoryList((prev) => [...prev, category])} />
-        </div>
-      )}
+      <div className="mt-4">
+        <NewCategoryForm
+          categories={categoryList}
+          onCreated={(category) => setCategoryList((prev) => [...prev, category])}
+        />
+      </div>
 
       <div className="mt-6 space-y-4">
         {channels.map((creator) => (

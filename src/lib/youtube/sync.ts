@@ -17,7 +17,7 @@ import { getYoutubeClientForUser } from "@/lib/youtube/client";
 import { matchKeywordCategory } from "@/lib/youtube/categorize";
 import { formatDuration, formatCount } from "@/lib/youtube/format";
 import { categorizeChannelWithAI, type CategoryOption } from "@/lib/gemini/categorize-channel";
-import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
+import { ensureBuiltInCategories } from "@/lib/categories/seed";
 
 type YoutubeClient = Awaited<ReturnType<typeof getYoutubeClientForUser>>;
 type YoutubeChannel = youtube_v3.Schema$Channel;
@@ -65,11 +65,9 @@ export async function syncUserSubscriptions(userId: string): Promise<void> {
   } while (pageToken);
 
   // Step 2: channels.list, batched up to 50 ids per call.
-  const customCategories = await prisma.category.findMany({ where: { userId } });
-  const availableCategories: CategoryOption[] = [
-    ...DEFAULT_CATEGORIES.map((c) => ({ slug: c.slug, name: c.name })),
-    ...customCategories.map((c) => ({ slug: c.slug, name: c.name })),
-  ];
+  await ensureBuiltInCategories(userId);
+  const existingCategories = await prisma.category.findMany({ where: { userId } });
+  const availableCategories: CategoryOption[] = existingCategories.map((c) => ({ slug: c.slug, name: c.name }));
   const categorizationBudget = { remaining: MAX_NEW_CHANNEL_CATEGORIZATIONS_PER_SYNC };
 
   const syncedVideoIds: string[] = [];

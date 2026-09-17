@@ -1,8 +1,7 @@
-// The 9 built-in desks. Shared by mock-data.ts (for display, merged with a
-// user's custom categories) and the sync pipeline (for Gemini's channel-
-// categorization prompt) — pulled into its own file specifically so those
-// two don't end up in a circular import (sync.ts -> mock-data.ts ->
-// target-user.ts -> sync.ts).
+// The 7 built-in desks — seed data only (see seed.ts). Every category,
+// built-in or not, lives as a row in the Category table now; this array is
+// just the template used to create a user's 7 rows the first time they're
+// needed. See topic-based-categorization.md for the full design.
 
 import type { Category } from "@/lib/types";
 
@@ -15,18 +14,12 @@ export const DEFAULT_CATEGORIES: Category[] = [
   {
     slug: "tech",
     name: "Technology",
-    standfirst: "Engineering, tooling, and the AI beat, sorted by discipline.",
-    subcategories: [
-      { slug: "ai", name: "AI" },
-      { slug: "frontend", name: "Frontend" },
-      { slug: "backend", name: "Backend" },
-      { slug: "fullstack", name: "Full-stack" },
-    ],
+    standfirst: "Engineering, tooling, and the gadget beat.",
   },
   {
-    slug: "sports",
-    name: "Sports",
-    standfirst: "Match analysis, transfer talk, and post-game breakdowns.",
+    slug: "ai",
+    name: "AI",
+    standfirst: "Models, tools, and the people building with them.",
   },
   {
     slug: "education",
@@ -37,30 +30,15 @@ export const DEFAULT_CATEGORIES: Category[] = [
     slug: "entertainment",
     name: "Entertainment",
     standfirst: "Film, television, and music — by language and region.",
-    subcategories: [
-      { slug: "hindi", name: "Hindi Cinema" },
-      { slug: "hollywood", name: "Hollywood" },
-      { slug: "korean", name: "Korean" },
-    ],
-  },
-  {
-    slug: "fashion",
-    name: "Fashion",
-    standfirst: "Style breakdowns, hauls, and season previews.",
-  },
-  {
-    slug: "vlogs",
-    name: "Vlogs",
-    standfirst: "Life, travel, and the everyday — from people worth following.",
-  },
-  {
-    slug: "trend",
-    name: "Trend Desk",
-    standfirst: "What's moving today, tracked before it's everywhere.",
   },
   {
     slug: "fitness",
     name: "Fitness",
     standfirst: "Training, diet, and the discipline behind both.",
+  },
+  {
+    slug: "podcasts",
+    name: "Podcasts",
+    standfirst: "Long-form conversations, however far they wander.",
   },
 ];

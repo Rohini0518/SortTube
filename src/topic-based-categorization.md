@@ -23,31 +23,81 @@ So: stop guessing. Use YouTube's own signal first. Only if YouTube gives us
 nothing usable does a channel stay in the `trend` bucket (same as today) —
 there is no AI step in this pipeline at all anymore.
 
-## The new rule (only runs for channels still stuck at `trend`)
+## The built-in categories (final list — 7, not 9)
+
+**News, Tech, AI, Education, Entertainment, Fitness, Podcasts.**
+
+Sports, Fashion, Vlogs, Trend, Music, and anything else aren't guaranteed to
+exist for every account anymore — they only get created the first time a
+real channel actually needs one, via the auto-create step below. `trend`
+keeps its existing internal job as the "not yet decided" placeholder value
+for a channel mid-pipeline — that doesn't change, it's just no longer
+pre-seeded as a "real" desk up front.
+
+Tech and AI are two separate categories, not one replacing the other — see
+the layered rule below for how a channel ends up in one or the other.
+
+## The new rule — three layers, checked in order (only runs for channels
+still stuck at `trend`)
 
 Already-categorized channels (matched by keyword, or manually moved by a
 user via "Move to...") are never touched by this — it only applies to
-channels where keyword matching found nothing.
+channels where nothing has matched yet. Each layer only runs if the one
+before it found nothing.
 
-**Step 1 — Ask YouTube what it thinks the channel is about.**
-Add `topicDetails` to the existing `channels.list` call in `sync.ts` (this
-call already happens every sync — adding this part costs zero extra API
-quota). It returns a list of Wikipedia-style topic links, e.g.:
+### Layer 1 — Podcast override (checked first, wins over everything)
+
+YouTube has no structured "this is a podcast" field or topic — confirmed by
+checking real data for two actual podcast channels (Andrew Huberman, Ranveer
+Allahbadia): neither has anything in `topicCategories` that says "podcast."
+But the literal word **does** show up reliably in the channel's own
+description and self-written branding keywords — e.g. Huberman's
+description literally says *"The Huberman Lab **podcast** is hosted
+by..."*, and his branding keywords include `"health podcast"`.
+
+So: search the channel's description + branding keywords for
+"podcast"/"podcasts"/"podcasting". If found → category is **Podcasts**,
+full stop — this is checked before subject-matter matching specifically so
+it wins even when the channel's actual topic (health, entertainment,
+whatever) would otherwise suggest something else.
+
+### Layer 2 — Keyword matching (existing system, widened)
+
+The existing keyword/regex rules (`categorize.ts`) currently only check the
+channel's plain **name**. This widens that to also search the channel's
+**description and branding keywords** — directly because a channel's name
+rarely spells out what it's about, but its own self-written keywords often
+do (e.g. Matt Wolfe's branding keywords are full of "AI," "ChatGPT,"
+"Machine Learning" — none of that appears in the name "Matt Wolfe" itself).
+
+The existing "AI" keyword rule — today a subcategory nested under Tech —
+gets promoted to its own top-level category, and (since it's already
+checked before the generic Tech rule in the rule list) naturally wins
+whenever AI-specific language is present, falling through to plain Tech
+otherwise. No separate "AI vs Tech" logic needed — this is just where the
+rule already sat, given a top-level slug instead of a subcategory one.
+
+### Layer 3 — Topic-based matching (only if Layers 1 and 2 both found nothing)
+
+**Ask YouTube what it thinks the channel is about.** Add `topicDetails` to
+the existing `channels.list` call in `sync.ts` (this call already happens
+every sync — adding this part costs zero extra API quota). It returns a
+list of Wikipedia-style topic links, e.g.:
 
 ```
 https://en.wikipedia.org/wiki/Technology
 https://en.wikipedia.org/wiki/Lifestyle_(sociology)
 ```
 
-**Step 2 — Canonicalize.** Several of YouTube's topic labels are really the
-same real-world thing: `Pop_music`, `Independent_music`, `Rock_music`,
+**Canonicalize.** Several of YouTube's topic labels are really the same
+real-world thing: `Pop_music`, `Independent_music`, `Rock_music`,
 `Soul_music`, and `Music_of_Asia` all just mean **Music**. Collapse these
 down to one clean name per real concept before doing anything else — this
 stops us from ever creating near-duplicate categories like "Pop Music" and
 "Independent Music" side by side.
 
-**Step 3 — Check against a small curated table of direct equivalences.**
-Only for cases we're confident really are the same thing:
+**Check against a small curated table of direct equivalences.** Only for
+cases we're confident really are the same thing:
 
 | YouTube topic | Our category |
 |---|---|
@@ -60,9 +110,9 @@ Only for cases we're confident really are the same thing:
 If exactly **one** of the channel's canonical topics matches this table,
 that's the category. Done.
 
-**Step 4 — Ambiguous cases fall back to `trend`, never guessed.** Two
-situations count as "ambiguous," and both just leave the channel in `trend`
-(to be retried on a future sync, exactly like today's fallback behavior):
+**Ambiguous cases fall back to `trend`, never guessed.** Two situations
+count as "ambiguous," and both just leave the channel in `trend` (to be
+retried on a future sync, exactly like today's fallback behavior):
 
 - Two or more of the channel's topics match **different** categories in the
   table above (e.g. both "Politics" and "Health" show up) — no confident
@@ -73,25 +123,28 @@ situations count as "ambiguous," and both just leave the channel in `trend`
   real channel twice and getting a different order back — so we deliberately
   never use "just take the first one" as a tiebreak.)
 
-**Step 5 — Exactly one unmatched topic → auto-create a new category.** If
-nothing in the table matched, but there's only **one** leftover canonical
-topic, that's a confident, unambiguous signal — create a category for it
-(checking the user's existing categories first, so multiple channels needing
-"Music" share one category instead of each creating a duplicate). This is
-how real categories like **Music**, **Society**, **Lifestyle**, or
-**Religion** come into existence the first time a channel actually needs
-one — not decided in advance, discovered from real data.
+**Exactly one unmatched topic → auto-create a new category.** If nothing in
+the table matched, but there's only **one** leftover canonical topic, that's
+a confident, unambiguous signal — create a category for it (checking the
+user's existing categories first, so multiple channels needing "Music"
+share one category instead of each creating a duplicate). This is how real
+categories like **Music**, **Society**, **Lifestyle**, or **Religion** come
+into existence the first time a channel actually needs one — not decided in
+advance, discovered from real data.
+
+### Still nothing after all three layers
+
+Stays `trend`, retried on the next sync — same fallback behavior as today.
 
 ## Categories move into the database — no more hardcoded list
 
-Today, the 9 built-in categories (News, Tech, Sports, Education,
-Entertainment, Fashion, Vlogs, Trend, Fitness) live as a hardcoded array in
-code, and only custom/extra ones live in the `Category` database table.
-That split goes away — **every category, built-in or not, becomes a row in
-the same table**, scoped per user (your `Category` table already supports
-this exact shape — no schema change needed).
+Today, the built-in categories live as a hardcoded array in code, and only
+custom/extra ones live in the `Category` database table. That split goes
+away — **every category, built-in or not, becomes a row in the same
+table**, scoped per user (your `Category` table already supports this exact
+shape — no schema change needed).
 
-- Every sync run makes sure a user has all 9 built-in rows (cheap,
+- Every sync run makes sure a user has all 7 built-in rows (cheap,
   idempotent — inserts only the ones missing). This also automatically
   backfills any account that already exists today, the next time it syncs.
 - Every place in the code that currently does "hardcoded array + database

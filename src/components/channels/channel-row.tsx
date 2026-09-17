@@ -40,6 +40,15 @@ export function ChannelRow({
   function handleMoveTo(newSlug: string) {
     if (newSlug === creator.category) return;
     setError(null);
+
+    // Signed out: nothing to persist (this is the shared mock dashboard),
+    // so just update local state, same as Pause/Remove already do — no
+    // server call at all.
+    if (!isSignedIn) {
+      onRecategorized(newSlug);
+      return;
+    }
+
     startTransition(async () => {
       const result = await recategorizeChannel(creator.id, newSlug);
       if (result.ok) {
@@ -71,21 +80,19 @@ export function ChannelRow({
       </div>
       <div className="flex shrink-0 flex-col items-end gap-2">
         <div className="flex items-center gap-3">
-          {isSignedIn && (
-            <select
-              aria-label={`Move ${creator.name} to a different category`}
-              value={creator.category}
-              disabled={isPending}
-              onChange={(e) => handleMoveTo(e.target.value)}
-              className="rounded-full border-2 border-foreground bg-card px-4 py-2 font-heading text-sm font-bold text-foreground disabled:opacity-40"
-            >
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            aria-label={`Move ${creator.name} to a different category`}
+            value={creator.category}
+            disabled={isPending}
+            onChange={(e) => handleMoveTo(e.target.value)}
+            className="rounded-full border-2 border-foreground bg-card px-4 py-2 font-heading text-sm font-bold text-foreground disabled:opacity-40"
+          >
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={onTogglePause}

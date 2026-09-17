@@ -13,7 +13,10 @@ interface Rule {
 }
 
 const RULES: Rule[] = [
-  { category: "tech", subcategory: "ai", pattern: /\b(ai|artificial intelligence|llm|gpt|chatgpt|gemini|claude|machine learning)\b/i },
+  // Checked before the generic "tech" rule below, so AI-specific language
+  // wins over a plain tech match — AI is its own top-level category now,
+  // not a tech subcategory (topic-based-categorization.md).
+  { category: "ai", pattern: /\b(ai|artificial intelligence|llm|gpt|chatgpt|gemini|claude|machine learning)\b/i },
   { category: "tech", subcategory: "frontend", pattern: /\b(react|css|frontend|tailwind|javascript|typescript|next\.?js|vue|html)\b/i },
   { category: "tech", subcategory: "backend", pattern: /\b(backend|database|sql|api|server|node\.?js|postgres|docker)\b/i },
   { category: "tech", subcategory: "fullstack", pattern: /\b(full[- ]?stack|web dev(eloper)?|coding|programming)\b/i },

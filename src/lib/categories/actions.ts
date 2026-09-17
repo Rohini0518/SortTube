@@ -8,7 +8,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getSignedInUserIdOrThrow } from "@/lib/auth/target-user";
-import { DEFAULT_CATEGORIES } from "@/lib/categories/default-categories";
+import { ensureBuiltInCategories } from "@/lib/categories/seed";
 import { slugify } from "@/lib/categories/slugify";
 
 type CategorySummary = { slug: string; name: string; standfirst: string };
@@ -34,11 +34,9 @@ export async function recategorizeChannel(
     return { ok: false, message: "That channel isn't in your subscriptions." };
   }
 
-  const customCategories = await prisma.category.findMany({ where: { userId } });
-  const validSlugs = new Set([
-    ...DEFAULT_CATEGORIES.map((c) => c.slug),
-    ...customCategories.map((c) => c.slug),
-  ]);
+  await ensureBuiltInCategories(userId);
+  const existingCategories = await prisma.category.findMany({ where: { userId } });
+  const validSlugs = new Set(existingCategories.map((c) => c.slug));
   if (!validSlugs.has(category)) {
     return { ok: false, message: "That's not a category that exists." };
   }
@@ -92,11 +90,7 @@ export async function createCustomCategory(
     return { ok: false, reason: "invalid", message: "Use a name with at least one letter or number." };
   }
 
-  const builtIn = DEFAULT_CATEGORIES.find((c) => c.slug === slug);
-  if (builtIn) {
-    return { ok: false, reason: "collision", existingCategory: builtIn };
-  }
-
+  await ensureBuiltInCategories(userId);
   const existing = await prisma.category.findUnique({
     where: { userId_slug: { userId, slug } },
   });
