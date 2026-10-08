@@ -24,7 +24,7 @@ export function GoogleSignInButton({ callbackUrl }: { callbackUrl?: string }) {
       type="button"
       variant="primary"
       className="w-full"
-      onClick={() => signIn("google", { callbackUrl: callbackUrl ?? "/" })}
+      onClick={() => signIn("google", { callbackUrl: callbackUrl ?? "/dashboard" })}
     >
       <GoogleMark />
       Continue with Google

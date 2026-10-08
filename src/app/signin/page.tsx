@@ -4,7 +4,9 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export const metadata: Metadata = {
@@ -32,6 +34,13 @@ export default async function SignInPage({
         aria-hidden
         className="pointer-events-none absolute top-1/3 right-10 h-24 w-24 rounded-full bg-secondary/25"
       />
+
+      <Link href="/" className="absolute left-4 top-6 z-10 sm:left-8 sm:top-8">
+        <Button variant="ghost">
+          <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
+          Back to home
+        </Button>
+      </Link>
 
       <Card shadow="violet" hover={false} className="relative z-10 w-full max-w-sm px-8 py-10 text-center">
         <Link href="/" className="group inline-block">

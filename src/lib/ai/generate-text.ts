@@ -1,10 +1,12 @@
-// Shared "ask an AI" helper used by both channel categorization
-// (gemini/categorize-channel.ts) and video summaries (gemini/summarize.ts).
-// Tries Gemini first; if Gemini fails for ANY reason — missing key, daily
-// quota exhausted (429), or the free tier being temporarily overloaded
-// (503 "high demand", which we've hit live during testing) — falls back to
-// Groq, a separate company with its own independent quota, so one
-// provider's outage/quota doesn't take out both AI features at once.
+// Shared "ask an AI" helper — used by video summaries (gemini/summarize.ts).
+// Channel categorization no longer uses AI at all (see
+// topic-based-categorization.md: keyword rules + YouTube's own topic data
+// replaced the old Gemini-based fallback entirely). Tries Gemini first; if
+// Gemini fails for ANY reason — missing key, daily quota exhausted (429),
+// or the free tier being temporarily overloaded (503 "high demand", which
+// we've hit live during testing) — falls back to Groq, a separate company
+// with its own independent quota, so a Gemini outage doesn't take out
+// summaries too.
 
 const GEMINI_MODEL = "gemini-flash-latest";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;

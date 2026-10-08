@@ -1,8 +1,9 @@
-// Keyword/regex categorization, per plan.md §8: matches a video's title +
-// channel name against simple rules to bucket it into a CategorySlug. Runs
-// once per video at sync time (see sync.ts) — v1 only, no LLM involved.
-// Unmatched videos fall into "trend" as the default bucket rather than being
-// dropped, per plan.md §8.
+// Layer 2 of channel categorization (topic-based-categorization.md) —
+// keyword/regex rules checked against a channel's name, description, and
+// self-written branding keywords combined (widened from name-only, since a
+// channel's own keywords often say what it's about even when its name
+// doesn't — see Matt Wolfe's real branding keywords, full of "AI"/
+// "ChatGPT"/"Machine Learning" despite none of that being in the name).
 
 import type { CategorySlug } from "@/lib/types";
 
@@ -40,15 +41,11 @@ const RULES: Rule[] = [
   { category: "news", pattern: /\b(news|breaking|headlines)\b/i },
 ];
 
-/** Returns null when nothing matches, instead of defaulting — lets a caller
- * (the channel-categorization path in sync.ts) distinguish "keyword rules
- * genuinely found nothing" from "confidently matched," so it knows when to
- * try the Gemini fallback rather than just silently landing on `trend`. */
-export function matchKeywordCategory(
-  title: string,
-  channelTitle: string,
-): { category: CategorySlug; subcategory?: string } | null {
-  const haystack = `${title} ${channelTitle}`;
+/** Returns null when nothing matches, instead of defaulting — lets the
+ * caller (sync.ts) distinguish "keyword rules genuinely found nothing"
+ * from "confidently matched," so it knows to move on to topic-based
+ * matching (Layer 3) rather than silently landing on `trend`. */
+export function matchKeywordCategory(haystack: string): { category: CategorySlug; subcategory?: string } | null {
   for (const rule of RULES) {
     if (rule.pattern.test(haystack)) {
       return { category: rule.category, subcategory: rule.subcategory };

@@ -23,7 +23,7 @@ export function Footer({ categories }: { categories: Category[] }) {
           <p className="font-heading text-xs font-bold uppercase tracking-wide text-muted-foreground">Desks</p>
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
             {categories.map((c) => (
-              <a key={c.slug} href={`/#${c.slug}`} className="font-body text-sm font-medium text-foreground hover:text-accent">
+              <a key={c.slug} href={`/dashboard#${c.slug}`} className="font-body text-sm font-medium text-foreground hover:text-accent">
                 {c.name}
               </a>
             ))}

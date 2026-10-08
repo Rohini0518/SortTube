@@ -30,7 +30,7 @@ export function AuthButton() {
         <span className="font-heading text-sm font-bold text-foreground">
           {session.user.name ?? session.user.email}
         </span>
-        <Button variant="ghost" onClick={() => signOut({ callbackUrl: "/" })}>
+        <Button variant="ghost" onClick={() => signOut({ callbackUrl: "/dashboard" })}>
           Sign out
         </Button>
       </div>

@@ -15,9 +15,10 @@ import type { youtube_v3 } from "googleapis";
 import { prisma } from "@/lib/prisma";
 import { getYoutubeClientForUser } from "@/lib/youtube/client";
 import { matchKeywordCategory } from "@/lib/youtube/categorize";
+import { isPodcastChannel } from "@/lib/youtube/podcast-detect";
+import { matchTopicCategory, type CategoryOption } from "@/lib/youtube/topic-categorize";
 import { formatDuration, formatCount } from "@/lib/youtube/format";
-import { categorizeChannelWithAI, type CategoryOption } from "@/lib/gemini/categorize-channel";
-import { ensureBuiltInCategories } from "@/lib/categories/seed";
+import { ensureBuiltInCategories, findOrCreateCategoryByName } from "@/lib/categories/seed";
 
 type YoutubeClient = Awaited<ReturnType<typeof getYoutubeClientForUser>>;
 type YoutubeChannel = youtube_v3.Schema$Channel;
@@ -25,10 +26,6 @@ type YoutubeChannel = youtube_v3.Schema$Channel;
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 const RECENT_VIDEOS_PER_CHANNEL = 10;
 const DEFAULT_CATEGORY_SLUG = "trend";
-// Gemini free tier: ~20 requests/day, shared with the on-demand summaries
-// feature. This runs automatically during sync (not on-demand), so it needs
-// its own cap — see smart-categorization.md's lesson from the summaries work.
-const MAX_NEW_CHANNEL_CATEGORIZATIONS_PER_SYNC = 4;
 
 export async function syncIfStale(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
@@ -64,22 +61,23 @@ export async function syncUserSubscriptions(userId: string): Promise<void> {
     pageToken = res.data.nextPageToken ?? undefined;
   } while (pageToken);
 
-  // Step 2: channels.list, batched up to 50 ids per call.
+  // Step 2: channels.list, batched up to 50 ids per call. brandingSettings
+  // and topicDetails cost nothing extra — same call, just a bigger
+  // response — and feed Layers 1-3 of categorization below.
   await ensureBuiltInCategories(userId);
   const existingCategories = await prisma.category.findMany({ where: { userId } });
   const availableCategories: CategoryOption[] = existingCategories.map((c) => ({ slug: c.slug, name: c.name }));
-  const categorizationBudget = { remaining: MAX_NEW_CHANNEL_CATEGORIZATIONS_PER_SYNC };
 
   const syncedVideoIds: string[] = [];
   for (const batch of chunk(channelIds, 50)) {
     const res = await youtube.channels.list({
-      part: ["snippet", "statistics", "contentDetails"],
+      part: ["snippet", "statistics", "contentDetails", "brandingSettings", "topicDetails"],
       id: batch,
       maxResults: 50,
     });
 
     for (const channel of res.data.items ?? []) {
-      const videoIds = await syncOneChannel(youtube, userId, channel, availableCategories, categorizationBudget);
+      const videoIds = await syncOneChannel(youtube, userId, channel, availableCategories);
       syncedVideoIds.push(...videoIds);
     }
   }
@@ -118,7 +116,6 @@ async function syncOneChannel(
   userId: string,
   channel: YoutubeChannel,
   availableCategories: CategoryOption[],
-  categorizationBudget: { remaining: number },
 ): Promise<string[]> {
   const channelId = channel.id;
   const uploadsPlaylistId = channel.contentDetails?.relatedPlaylists?.uploads;
@@ -148,21 +145,49 @@ async function syncOneChannel(
   let categorizedAt = existingSubscription?.categorizedAt ?? null;
 
   if (!categorizedAt) {
-    const keywordMatch = matchKeywordCategory(channelTitle, channelTitle);
-    if (keywordMatch) {
-      category = keywordMatch.category;
-      subcategory = keywordMatch.subcategory;
+    const description = channel.snippet?.description ?? "";
+    const brandingKeywords = channel.brandingSettings?.channel?.keywords ?? "";
+    const topicUrls = channel.topicDetails?.topicCategories ?? [];
+
+    if (isPodcastChannel(description, brandingKeywords)) {
+      // Layer 1 — checked first, wins over everything else. YouTube has no
+      // structured "podcast" signal, but the word reliably shows up in a
+      // podcast channel's own description/keywords (podcast-detect.ts).
+      category = "podcasts";
+      subcategory = undefined;
       categorizedAt = new Date();
-    } else if (categorizationBudget.remaining > 0) {
-      categorizationBudget.remaining -= 1;
-      const aiSlug = await categorizeChannelWithAI(channelTitle, availableCategories);
-      if (aiSlug) {
-        category = aiSlug;
-        subcategory = undefined;
+    } else {
+      // Layer 2 — keyword rules against name + branding keywords (NOT the
+      // free-text description — that's prose, and generic regex words can
+      // coincidentally appear in an unrelated sentence, e.g. a real false
+      // positive we hit live: Saregama's description says "radio
+      // programming" — programming as in broadcast scheduling, not
+      // software — which matched the "fullstack" tech rule. Branding
+      // keywords are short, deliberate tags a channel owner wrote on
+      // purpose, so they don't carry that same risk).
+      const keywordMatch = matchKeywordCategory(`${channelTitle} ${brandingKeywords}`);
+      if (keywordMatch) {
+        category = keywordMatch.category;
+        subcategory = keywordMatch.subcategory;
         categorizedAt = new Date();
+      } else {
+        // Layer 3 — YouTube's own topic data (topic-categorize.ts). Never
+        // guesses: returns null when ambiguous, leaving the channel in
+        // `trend` to retry on a later sync.
+        const topicMatch = matchTopicCategory(topicUrls, availableCategories);
+        if (topicMatch) {
+          if (topicMatch.isNew && topicMatch.newCategoryName) {
+            await findOrCreateCategoryByName(userId, topicMatch.newCategoryName, topicMatch.slug);
+            // So a later channel in this same sync run that needs the same
+            // new category reuses it instead of trying to create it again.
+            availableCategories.push({ slug: topicMatch.slug, name: topicMatch.newCategoryName });
+          }
+          category = topicMatch.slug;
+          subcategory = undefined;
+          categorizedAt = new Date();
+        }
+        // else: leave categorizedAt null — retried on the next sync.
       }
-      // else: leave categorizedAt null — retried on the next sync, same as
-      // the summaries feature's failure handling.
     }
   }
 

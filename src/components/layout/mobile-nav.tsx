@@ -47,7 +47,7 @@ export function MobileNav({
             {categories.map((c) => (
               <a
                 key={c.slug}
-                href={`/#${c.slug}`}
+                href={`/dashboard#${c.slug}`}
                 onClick={() => setOpen(false)}
                 className="px-3 py-3 font-body text-sm font-semibold text-muted-foreground"
               >

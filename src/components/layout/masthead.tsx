@@ -5,7 +5,7 @@ import { AuthButton } from "@/components/layout/auth-button";
 import type { Category } from "@/lib/types";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
+  { href: "/dashboard", label: "Home" },
   { href: "/feed", label: "Feed" },
   { href: "/channels", label: "Channels" },
 ];
@@ -16,12 +16,10 @@ export function Masthead({ categories }: { categories: Category[] }) {
   return (
     <header className="sticky top-0 z-40 border-b-2 border-foreground bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <Link href="/" className="group">
-          <span className="block font-body text-sm font-semibold italic text-secondary">
-            the daily sub <span className="not-italic">👀</span>
-          </span>
+        <Link href="/dashboard" className="group">
           <span className="block font-heading text-3xl font-extrabold tracking-tight text-foreground">
-          Sort Tube
+          Sort Tube           <span className="not-italic">👀</span>
+
           </span>
         </Link>
 
@@ -54,7 +52,7 @@ export function Masthead({ categories }: { categories: Category[] }) {
         {categories.map((c, i) => (
           <a
             key={c.slug}
-            href={`/#${c.slug}`}
+            href={`/dashboard#${c.slug}`}
             className={`whitespace-nowrap font-body text-sm font-semibold text-muted-foreground ${CATEGORY_TONES[i % CATEGORY_TONES.length]}`}
           >
             {c.name}

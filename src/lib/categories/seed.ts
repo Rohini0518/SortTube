@@ -48,3 +48,16 @@ export async function backfillOrphanedCategories(userId: string): Promise<void> 
     skipDuplicates: true,
   });
 }
+
+/** Used by Layer 3 of channel categorization (topic-based-categorization.md)
+ * when a channel's topic data doesn't match anything existing — creates the
+ * new category (e.g. "Music", "Society") the first time it's actually
+ * needed. Upsert, not create: safe if two channels in the same sync run
+ * both need the same brand-new category. */
+export async function findOrCreateCategoryByName(userId: string, name: string, slug: string): Promise<void> {
+  await prisma.category.upsert({
+    where: { userId_slug: { userId, slug } },
+    update: {},
+    create: { userId, slug, name, standfirst: `Videos about ${name}.` },
+  });
+}
