@@ -90,7 +90,7 @@ export function Thumbnail({
 
       {canPlay && (
         <span className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors duration-200 group-hover/thumb:bg-foreground/25">
-          <span className="flex h-12 w-12 scale-90 items-center justify-center rounded-full border-2 border-foreground bg-accent text-white opacity-0 shadow-[3px_3px_0px_0px_#1E293B] transition-all duration-200 group-hover/thumb:scale-100 group-hover/thumb:opacity-100">
+          <span className="flex h-12 w-12 scale-90 items-center justify-center rounded-full border-2 border-foreground bg-accent text-white opacity-0 shadow-[3px_3px_0px_0px_var(--foreground)] transition-all duration-200 group-hover/thumb:scale-100 group-hover/thumb:opacity-100">
             <Play className="ml-0.5 h-5 w-5 fill-current" strokeWidth={0} />
           </span>
         </span>

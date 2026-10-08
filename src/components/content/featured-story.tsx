@@ -15,7 +15,7 @@ export function FeaturedStory({ video, creator }: { video: Video; creator: Creat
     <section className="relative overflow-hidden pb-14 pt-4">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-24 -top-16 h-80 w-80 rounded-full bg-tertiary/40 sm:h-96 sm:w-96"
+        className="pointer-events-none absolute -left-24 -top-16 h-80 w-80 rounded-full bg-accent/25 sm:h-96 sm:w-96"
       />
       <div
         aria-hidden="true"

@@ -57,7 +57,7 @@ export function VideoModalProvider({ children }: { children: React.ReactNode }) 
           onClick={close}
         >
           <div
-            className="relative w-full max-w-3xl overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-[8px_8px_0px_0px_#1E293B]"
+            className="relative w-full max-w-3xl overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-[8px_8px_0px_0px_var(--foreground)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-4 border-b-2 border-foreground bg-tertiary px-5 py-3">

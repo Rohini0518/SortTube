@@ -35,7 +35,7 @@ export function DesksSection() {
           {DEFAULT_CATEGORIES.map((category, index) => (
             <div
               key={category.slug}
-              className="sticker-card rounded-2xl border-2 border-foreground bg-card p-5 shadow-[6px_6px_0px_0px_#1E293B]"
+              className="sticker-card rounded-2xl border-2 border-foreground bg-card p-5 shadow-[6px_6px_0px_0px_var(--foreground)]"
             >
               <IconCircle icon={DESK_ICONS[category.slug] ?? Newspaper} tone={TONES[index % TONES.length]} />
               <p className="mt-3 font-heading text-base font-extrabold text-foreground">{category.name}</p>

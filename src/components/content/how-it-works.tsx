@@ -16,7 +16,7 @@ export function HowItWorks() {
           {HOW_IT_WORKS_STEPS.map((step, index) => (
             <div
               key={step.title}
-              className="sticker-card rounded-2xl border-2 border-foreground bg-card p-6 text-center shadow-[6px_6px_0px_0px_#1E293B]"
+              className="sticker-card rounded-2xl border-2 border-foreground bg-card p-6 text-center shadow-[6px_6px_0px_0px_var(--foreground)]"
             >
               <div className="flex justify-center">
                 <IconCircle icon={ICONS[index]} tone={TONES[index]} size="lg" />

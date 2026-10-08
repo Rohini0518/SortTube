@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthButton } from "@/components/layout/auth-button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { Category } from "@/lib/types";
 
 export function MobileNav({
@@ -60,8 +61,9 @@ export function MobileNav({
               Manage subscriptions
             </Button>
           </Link>
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex items-center justify-center gap-3">
             <AuthButton />
+            <ThemeToggle />
           </div>
         </div>
       )}

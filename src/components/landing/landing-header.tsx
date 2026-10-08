@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function LandingHeader() {
   return (
@@ -34,6 +35,7 @@ export function LandingHeader() {
           <Link href="/signin">
             <Button variant="primary">Sign in</Button>
           </Link>
+          <ThemeToggle />
         </div>
       </div>
     </header>

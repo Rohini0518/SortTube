@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { AuthButton } from "@/components/layout/auth-button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { Category } from "@/lib/types";
 
 const NAV_LINKS = [
@@ -14,9 +15,9 @@ const CATEGORY_TONES = ["hover:text-accent", "hover:text-secondary", "hover:text
 
 export function Masthead({ categories }: { categories: Category[] }) {
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-foreground bg-background/95 backdrop-blur">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <Link href="/dashboard" className="group">
+        <Link href="/" className="group">
           <span className="block font-heading text-3xl font-extrabold tracking-tight text-foreground">
           Sort Tube           <span className="not-italic">👀</span>
 
@@ -40,6 +41,7 @@ export function Masthead({ categories }: { categories: Category[] }) {
             <Button variant="secondary">Manage subscriptions</Button>
           </Link>
           <AuthButton />
+          <ThemeToggle />
         </div>
 
         <MobileNav categories={categories} navLinks={NAV_LINKS} />
