@@ -17,10 +17,9 @@ export function Masthead({ categories }: { categories: Category[] }) {
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <Link href="/" className="group">
-          <span className="block font-heading text-3xl font-extrabold tracking-tight text-foreground">
-          Sort Tube           <span className="not-italic">👀</span>
-
+        <Link href="/" className="group shrink-0">
+          <span className="block whitespace-nowrap font-heading text-xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+            Sort Tube <span className="not-italic">👀</span>
           </span>
         </Link>
 

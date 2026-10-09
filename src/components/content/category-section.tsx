@@ -30,7 +30,6 @@ export function CategorySection({ section, index }: { section: FeedSection; inde
         categorySlug={section.category.slug}
         tone={tone}
       />
-      <h1>ROHIN</h1>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <VideoCardLead

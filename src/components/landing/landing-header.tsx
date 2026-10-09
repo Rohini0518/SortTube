@@ -11,8 +11,8 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 export function LandingHeader() {
   return (
     <header className="border-b-2 border-foreground bg-background/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <span className="font-heading text-3xl font-extrabold tracking-tight text-foreground">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-y-3 px-4 py-5 sm:px-6">
+        <span className="whitespace-nowrap font-heading text-xl font-extrabold tracking-tight text-foreground sm:text-3xl">
           Sort Tube <span className="not-italic">👀</span>
         </span>
 
@@ -28,12 +28,16 @@ export function LandingHeader() {
           </a>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <Link href="/dashboard">
-            <Button variant="secondary">Browse as guest</Button>
+            <Button variant="secondary" className="min-h-10 px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm">
+              Browse as guest
+            </Button>
           </Link>
           <Link href="/signin">
-            <Button variant="primary">Sign in</Button>
+            <Button variant="primary" className="min-h-10 px-3 text-xs sm:min-h-[48px] sm:px-6 sm:text-sm">
+              Sign in
+            </Button>
           </Link>
           <ThemeToggle />
         </div>
