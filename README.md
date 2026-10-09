@@ -2,7 +2,7 @@
 
 A curated front page built from **your own real YouTube subscriptions**, automatically sorted into topic categories — instead of whatever YouTube's algorithm decides to surface.
 
-**Live demo:** __
+**Live demo:** [sort-tube.vercel.app](https://sort-tube.vercel.app/)
 
 ## What it does
 
